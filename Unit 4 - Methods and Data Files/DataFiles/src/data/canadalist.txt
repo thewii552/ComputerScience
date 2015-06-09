@@ -1,0 +1,10 @@
+Ontario, ON, Toronto, July 1 1867, 12851821,on.png
+Quebec,	QC,Quebec City, July 1 1867, 7903001,qc.png
+Nova Scotia,NS,Halifax,July 1 1867,921727,ns.png
+New Brunswick,NB,Fredericton,July 1 1867,751171,nb.png
+Manitoba,MB,Winnipeg,July 15 1870,1208268,mb.png
+British Columbia,BC,Victoria,July 20 1871,4400057,bc.png
+Prince Edward Island,PE,Charlottetown,July 1 1873,140204,pe.png
+Saskatchewan,SK,Regina,Sept 1 1905,1033381,sk.png
+Alberta,AB,Edmonton,Sept 1 1905,3645257,ab.png
+Newfoundland,NL,St. John's,March 31 1949,514536,nl.png
