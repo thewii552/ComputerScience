@@ -16,15 +16,18 @@ import javax.swing.*;
 
 //change name of class:
 public class Atwood extends PApplet {
-
+    
+    //"Ground Level"
+    final float GROUND = 450f;
+    //Make the weights
     Weight leftWeight, rightWeight;
     final float SCALE = 0.01f; //metres per pixel
     float time = 0f, tension = 0f;
 
     public void setup() {
         size(1000, 500, JAVA2D);
-        leftWeight = new Weight(10,10,60,30);
-        rightWeight = new Weight(100,10,60,30);
+        leftWeight = new Weight(10, 0.5f, 80,1.01f);
+        rightWeight = new Weight(100, 2, 60,0.5f);
 
     }
 
@@ -46,28 +49,44 @@ public class Atwood extends PApplet {
     //The weight class
     class Weight {
 
+        //Create the PImage for the weight
+        PImage weightImage = new PImage();
+
         //Fields for the weight class
-        float mass = 1f, velocity = 0f, ek = 0f, ep = 0f, time = 0f;
-        //"Ground Level"
-        static final float GROUND = 450f;
-        
-        private float xpos, height, width, length;
+        float mass = 0f, velocity = 0f, ek = 0f, ep = 0f, time = 0f;
+
+        //X position of weight, height above ground, width of weight, length of weight
+        private float xpos, width, length;
+        float height;
 
         //Weight constructor
-        Weight(float xpos1, float height1, float width1, float length1) {
-            xpos=xpos1;
-            height = height1;
+        Weight(float xpos1, float height1, float width1, float mass1) {
+            //X position of weight
+            xpos = xpos1;
+            //Height of weight off ground
+            height = height1/SCALE;
+            //Width of weight
             width = width1;
-            length = length1;
+            length = width1 / 0.8f;
+            //Mass of weight
+            mass=mass1;
+            //Load the weight graphic
+            weightImage = loadImage("weight.png");
         }
 
         //Draw the weight
         void draw() {
             fill(255);
-            rect(xpos,GROUND-height,width,length);
+//            rect(xpos, GROUND - height - length, width, length);
             fill(0);
             textAlign(CENTER);
-            text(mass + " kg", xpos + width / 2, height + length / 2 + 3);
+            //Make the image the right size
+            weightImage.resize((int) width, 0);
+            //Draw the image
+            image(weightImage, xpos, GROUND - height - length);
+            //Add text in the middle of the image
+            fill(255);
+            text(mass + " kg", xpos + width / 2 + 1, GROUND - height - length / +3);
         }
 
         void move(float amount) {
