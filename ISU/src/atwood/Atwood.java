@@ -16,18 +16,38 @@ import javax.swing.*;
 
 //change name of class:
 public class Atwood extends PApplet {
-    
+
     //"Ground Level"
     final float GROUND = 450f;
+    final float SCALE = 0.01f; //metres per pixel
+
     //Make the weights
     Weight leftWeight, rightWeight;
-    final float SCALE = 0.01f; //metres per pixel
+    //Sliders
+    GSlider lSlider, rSlider;
+    
+    //Wheel image
+    PImage wheel;
+
     float time = 0f, tension = 0f;
+    byte leftOld = 50, rightOld = 50;
 
     public void setup() {
         size(1000, 500, JAVA2D);
-        leftWeight = new Weight(10, 0.5f, 80,1.01f);
-        rightWeight = new Weight(100, 2, 60,0.5f);
+        
+        //Initialize the weights
+        leftWeight = new Weight(10, 0.5f, 66,1.6f);
+        rightWeight = new Weight(100, 2, 66, 1.6f);
+        
+        //Initialize the sliders
+        lSlider = new GSlider(this, 10, 30, 250, 250, 15);
+        rSlider = new GSlider(this, 10, 30, 250, 100, 15);
+        lSlider.setLimits(0, 30);
+        rSlider.setLimits(0, 30);
+        
+        //Load the wheel image
+        wheel = loadImage("wheel.png");
+        wheel.resize(80,0);
 
     }
 
@@ -37,13 +57,58 @@ public class Atwood extends PApplet {
     }
 
     public void draw() {
-        background(255); //white
+        background(200); //white
         leftWeight.draw();
         rightWeight.draw();
+        
+        //Draw the wheel
+        
+        image (wheel,50,10);
     }
 
     public void keyPressed() {
         leftWeight.move(-0.01f);
+    }
+
+    public void handleSliderEvents(GValueControl slider, GEvent event) {
+
+        if (slider == lSlider) { //Adjust the values of the left weight
+            float sliderVal = lSlider.getValueF();
+            //Reload the image so it looks sharp
+            if (leftOld < sliderVal) {
+                leftWeight.reload();
+            }
+            //Store the last size
+            leftOld = (byte) sliderVal;
+            //Resize the weight
+            leftWeight.resize(sliderVal+50);
+            
+            //Set the mass
+            float newMass = sliderVal*10+10;
+            newMass = Math.round(newMass);
+            newMass = newMass/100;
+            leftWeight.setMass(newMass);
+
+        }
+        
+        if (slider == rSlider) { //Adjust the values of the right weight
+            float sliderVal = rSlider.getValueF();
+            //Reload the image so it looks sharp
+            if (rightOld < sliderVal) {
+                rightWeight.reload();
+            }
+            //Store the last size
+            rightOld = (byte) sliderVal;
+            //Resize the weight
+            rightWeight.resize(sliderVal+50);
+            
+            //Set the mass
+            float newMass = sliderVal*10+10;
+            newMass = Math.round(newMass);
+            newMass = newMass/100;
+            rightWeight.setMass(newMass);
+
+        }
     }
 
     //The weight class
@@ -64,24 +129,23 @@ public class Atwood extends PApplet {
             //X position of weight
             xpos = xpos1;
             //Height of weight off ground
-            height = height1/SCALE;
+            height = height1 / SCALE;
             //Width of weight
             width = width1;
             length = width1 / 0.8f;
             //Mass of weight
-            mass=mass1;
+            mass = mass1;
             //Load the weight graphic
             weightImage = loadImage("weight.png");
         }
 
         //Draw the weight
         void draw() {
-            fill(255);
-//            rect(xpos, GROUND - height - length, width, length);
+
             fill(0);
             textAlign(CENTER);
-            //Make the image the right size
             weightImage.resize((int) width, 0);
+
             //Draw the image
             image(weightImage, xpos, GROUND - height - length);
             //Add text in the middle of the image
@@ -91,6 +155,19 @@ public class Atwood extends PApplet {
 
         void move(float amount) {
             height -= amount / SCALE;
+        }
+
+        void resize(float width1) {
+            width = width1;
+            length = width1 / 0.8f;
+        }
+        void setMass(float mass1){
+            mass = mass1;
+        }
+
+        void reload() {
+            //Load the weight graphic
+            weightImage = loadImage("weight.png");
         }
 
     }
