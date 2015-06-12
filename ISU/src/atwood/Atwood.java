@@ -39,17 +39,18 @@ public class Atwood extends PApplet {
         size(1000, 600, JAVA2D);
 
         //Initialize the weights
-        leftWeight = new Weight(50, 0, 66, 1.6f);
-        rightWeight = new Weight(135, 2, 66, 1.6f);
+        leftWeight = new Weight(150, 0, 66, 1.6f);
+        rightWeight = new Weight(235, 2, 66, 1.6f);
 
         //Initialize the sliders
-        sldLMass = new GSlider(this, 10, GROUND + 20, 250, 18, 15);
-        sldRMass = new GSlider(this, 10, GROUND + 40, 250, 18, 15);
+        sldLMass = new GSlider(this, 80, GROUND + 20, 250, 18, 15);
+        sldRMass = new GSlider(this, 80, GROUND + 40, 250, 18, 15);
         sldLMass.setLimits(0, 30);
         sldRMass.setLimits(0, 30);
 
         //Initialize the text boxes
-        txtLMass = new GTextField(this, 10, 10, 100, 18);
+        txtLMass = new GTextField(this, 340, GROUND+20, 50, 18);
+        txtLMass.setText(Float.toString(leftWeight.getMass())+" Kg");
 
         //Load the wheel image
         wheel = loadImage("wheel.png");
@@ -58,22 +59,29 @@ public class Atwood extends PApplet {
     }
 
     public void handleButtonEvents(GButton button, GEvent event) {
-
+        
     }
 
     public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
         if (textcontrol == txtLMass) { //Adjust left mass
             if (event  ==GEvent.LOST_FOCUS){
-                if (Float.parseFloat(txtLMass.getText())>3.1){ //The number is too big. Make it smaller
-                    txtLMass.setText("3.1");
+                //Get the number
+                float numEntered = Float.parseFloat(txtLMass.getText());
+                //Round to 2 decimal places
+                numEntered=Math.round(100*numEntered);
+                numEntered *=0.01;
+                //Check the number
+                if (numEntered>3.1){ //The number is too big. Make it smaller
+                    numEntered=3.10f;
                 }
                 
-                if (Float.parseFloat(txtLMass.getText())<0.1){ //The number is too small. Make it bigger
-                    txtLMass.setText("0.1");
+                if (numEntered<0.1){ //The number is too small. Make it bigger
+                    numEntered=0.10f;
                 }
                 
-                //Now that the number is good, set the mass
-                leftWeight.setMass(Float.parseFloat(txtLMass.getText()));
+                //Now that the number is good, set the mass and text box
+                txtLMass.setText(Float.toString(numEntered)+" Kg");
+                leftWeight.setMass(numEntered);
             }
         }
     }
@@ -90,12 +98,22 @@ public class Atwood extends PApplet {
         rightWeight.draw();
 
         //Draw the wheel
-        image(wheel, 48, 10);
+        image(wheel, 148, 10);
+        
+        //Draw the labels
+        label();
 
+    }
+    
+    void label(){
+        textFont(createFont("Arial",12));
+        fill (0);
+        text ("Mass 1",58,481);
+        text ("Mass 2",58,503);
     }
 
     public void keyPressed() {
-
+        leftWeight.move(-0.01f);
     }
 
     public void handleSliderEvents(GValueControl slider, GEvent event) {
@@ -118,7 +136,7 @@ public class Atwood extends PApplet {
             leftWeight.setMass(newMass);
             
             //Change the text box
-           txtLMass.setText(Float.toString(newMass));
+           txtLMass.setText(Float.toString(newMass)+" Kg");
 
         }
 
@@ -205,6 +223,10 @@ public class Atwood extends PApplet {
         void reload() {
             //Load the weight graphic
             weightImage = loadImage("weight.png");
+        }
+        
+        float getMass(){
+            return mass;
         }
 
     }
