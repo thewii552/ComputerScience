@@ -24,8 +24,11 @@ public class Atwood extends PApplet {
     //Make the weights
     Weight leftWeight, rightWeight;
     //Sliders
-    GSlider lSlider, rSlider;
-    
+    GSlider sldLMass, sldRMass, sldLHeight;
+
+    //Text boxes
+    GTextField txtLMass, txtRMass;
+
     //Wheel image
     PImage wheel;
 
@@ -33,79 +36,107 @@ public class Atwood extends PApplet {
     byte leftOld = 50, rightOld = 50;
 
     public void setup() {
-        size(1000, 500, JAVA2D);
-        
+        size(1000, 600, JAVA2D);
+
         //Initialize the weights
-        leftWeight = new Weight(10, 0.5f, 66,1.6f);
-        rightWeight = new Weight(100, 2, 66, 1.6f);
-        
+        leftWeight = new Weight(50, 0, 66, 1.6f);
+        rightWeight = new Weight(135, 2, 66, 1.6f);
+
         //Initialize the sliders
-        lSlider = new GSlider(this, 10, 30, 250, 250, 15);
-        rSlider = new GSlider(this, 10, 30, 250, 100, 15);
-        lSlider.setLimits(0, 30);
-        rSlider.setLimits(0, 30);
-        
+        sldLMass = new GSlider(this, 10, GROUND + 20, 250, 18, 15);
+        sldRMass = new GSlider(this, 10, GROUND + 40, 250, 18, 15);
+        sldLMass.setLimits(0, 30);
+        sldRMass.setLimits(0, 30);
+
+        //Initialize the text boxes
+        txtLMass = new GTextField(this, 10, 10, 100, 18);
+
         //Load the wheel image
         wheel = loadImage("wheel.png");
-        wheel.resize(80,0);
+        wheel.resize(90, 0);
 
     }
 
     public void handleButtonEvents(GButton button, GEvent event) {
 
-        //code for buttons goes here
+    }
+
+    public void handleTextEvents(GEditableTextControl textcontrol, GEvent event) {
+        if (textcontrol == txtLMass) { //Adjust left mass
+            if (event  ==GEvent.LOST_FOCUS){
+                if (Float.parseFloat(txtLMass.getText())>3.1){ //The number is too big. Make it smaller
+                    txtLMass.setText("3.1");
+                }
+                
+                if (Float.parseFloat(txtLMass.getText())<0.1){ //The number is too small. Make it bigger
+                    txtLMass.setText("0.1");
+                }
+                
+                //Now that the number is good, set the mass
+                leftWeight.setMass(Float.parseFloat(txtLMass.getText()));
+            }
+        }
     }
 
     public void draw() {
-        background(200); //white
+        background(200);
+        //Draw the rope
+        fill(100);
+        line(rightWeight.xpos, GROUND - rightWeight.height - 10, rightWeight.xpos, 45);
+        line(leftWeight.xpos, GROUND - leftWeight.height - 10, leftWeight.xpos, 45);
+
+        //Draw weights
         leftWeight.draw();
         rightWeight.draw();
-        
+
         //Draw the wheel
-        
-        image (wheel,50,10);
+        image(wheel, 48, 10);
+
     }
 
     public void keyPressed() {
-        leftWeight.move(-0.01f);
+
     }
 
     public void handleSliderEvents(GValueControl slider, GEvent event) {
 
-        if (slider == lSlider) { //Adjust the values of the left weight
-            float sliderVal = lSlider.getValueF();
+        if (slider == sldLMass) { //Adjust the values of the left weight
+            float sliderVal = sldLMass.getValueF();
             //Reload the image so it looks sharp
             if (leftOld < sliderVal) {
                 leftWeight.reload();
             }
             //Store the last size
             leftOld = (byte) sliderVal;
-            //Resize the weight
-            leftWeight.resize(sliderVal+50);
-            
+//            //Resize the weight
+//            leftWeight.resize(sliderVal + 50);
+
             //Set the mass
-            float newMass = sliderVal*10+10;
+            float newMass = sliderVal * 10 + 10;
             newMass = Math.round(newMass);
-            newMass = newMass/100;
+            newMass = newMass / 100;
             leftWeight.setMass(newMass);
+            
+            //Change the text box
+           txtLMass.setText(Float.toString(newMass));
 
         }
-        
-        if (slider == rSlider) { //Adjust the values of the right weight
-            float sliderVal = rSlider.getValueF();
+
+        if (slider == sldRMass) { //Adjust the values of the right weight
+            float sliderVal = sldRMass.getValueF();
             //Reload the image so it looks sharp
             if (rightOld < sliderVal) {
                 rightWeight.reload();
             }
             //Store the last size
             rightOld = (byte) sliderVal;
-            //Resize the weight
-            rightWeight.resize(sliderVal+50);
-            
+//            //Resize the weight
+//            rightWeight.resize(sliderVal + 50);
+
             //Set the mass
-            float newMass = sliderVal*10+10;
+            float newMass = sliderVal * 10 + 10;
             newMass = Math.round(newMass);
-            newMass = newMass/100;
+            newMass = newMass / 100;
             rightWeight.setMass(newMass);
 
         }
@@ -121,8 +152,7 @@ public class Atwood extends PApplet {
         float mass = 0f, velocity = 0f, ek = 0f, ep = 0f, time = 0f;
 
         //X position of weight, height above ground, width of weight, length of weight
-        private float xpos, width, length;
-        float height;
+        float xpos, width, length, height;
 
         //Weight constructor
         Weight(float xpos1, float height1, float width1, float mass1) {
@@ -147,10 +177,10 @@ public class Atwood extends PApplet {
             weightImage.resize((int) width, 0);
 
             //Draw the image
-            image(weightImage, xpos, GROUND - height - length);
+            image(weightImage, xpos - width / 2, GROUND - height - length);
             //Add text in the middle of the image
             fill(255);
-            text(mass + " kg", xpos + width / 2 + 1, GROUND - height - length / +3);
+            text(mass + " kg", xpos + 1, GROUND - height - length / +3);
         }
 
         void move(float amount) {
@@ -161,8 +191,15 @@ public class Atwood extends PApplet {
             width = width1;
             length = width1 / 0.8f;
         }
-        void setMass(float mass1){
+
+        void setMass(float mass1) {
+            //Set the mass
             mass = mass1;
+            //Set the size based off of the mass
+            float width1;
+            width1=10*mass1+50;
+            width = width1;
+            length = width1 / 0.8f;
         }
 
         void reload() {
