@@ -89,7 +89,17 @@ public class Atwood extends PApplet {
         frameTime = frameTime / 100;
         
         //Add the toggle buttons for the questions
-        
+        for (int x = 0; x < 4; x++){
+            //put the option buttons on screen
+            optQ1[x] = new GOption (this, questx+10, questy*30+10, 100, 20);
+            optQ2[x] = new GOption (this, questx+10, questy*30+50, 100, 20);
+            //Put the option buttons into groups
+            System.out.println(x);
+//            grpQ1.addControl(optQ1[x]);
+//            grpQ2.addControl(optQ2[x]);
+            
+            
+        }
 
     }
     
