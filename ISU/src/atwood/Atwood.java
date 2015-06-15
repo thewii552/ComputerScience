@@ -12,6 +12,7 @@ package atwood;
 
 import processing.core.*;
 import g4p_controls.*;
+import java.util.StringTokenizer;
 import javax.swing.*;
 
 //change name of class:
@@ -25,7 +26,7 @@ public class Atwood extends PApplet {
     Weight leftWeight, rightWeight;
 
     //GButtons
-    GButton btnRun, btnReset;
+    GButton btnRun, btnReset, btnNext;
 
     //Sliders
     GSlider sldLMass, sldRMass, sldLHeight;
@@ -36,19 +37,23 @@ public class Atwood extends PApplet {
     //Wheel image
     PImage wheel;
 
-    float time = 0f, fNet = 0f, gravity = 9.80f, questx=420, questy=300;
+    float time = 0f, fNet = 0f, gravity = 9.80f, questx = 420, questy = 300, totmass;
     double frameTime;
-    byte leftOld = 50, rightOld = 50;
-    
+    byte leftOld = 50, rightOld = 50, questPage, score;
+
     //Text for the questions
-    String question1="This is question 1", question2 = "This is question 2";
-    
+    String question1 = "This is question 1", question2 = "This is question 2";
+    String questionList[];
+    String sepQuestions[][];
+
     //Option buttons for questions
     GOption optQ1[] = new GOption[4];
-    GToggleGroup grpQ1;
+    GToggleGroup grpQ1 = new GToggleGroup();
     GOption optQ2[] = new GOption[4];
-    GToggleGroup grpQ2;
-    
+    GToggleGroup grpQ2 = new GToggleGroup();
+
+    int rightAns[] = new int[2];
+
     //Store if the simulation is runninng
     boolean simulating = false;
 
@@ -56,8 +61,8 @@ public class Atwood extends PApplet {
         size(1000, 600, JAVA2D);
 
         //Initialize the weights
-        leftWeight = new Weight(150, 1.5f, 66, 2);
-        rightWeight = new Weight(235, 1.5f, 66, 1.6f);
+        leftWeight = new Weight(150, 1, 66, 1.6f);
+        rightWeight = new Weight(235, 1, 66, 1.6f);
 
         //Initialize the sliders
         sldLMass = new GSlider(this, 80, GROUND + 20, 250, 18, 15);
@@ -77,6 +82,8 @@ public class Atwood extends PApplet {
         btnRun.setText("Run Simulation");
         btnReset = new GButton(this, 295, GROUND + 100, 100, 30);
         btnReset.setText("Reset");
+        btnNext = new GButton(this, questx + 390, questy + 240, 100, 30);
+        btnNext.setText("Next Question");
 
         //Load the wheel image
         wheel = loadImage("wheel.png");
@@ -87,23 +94,108 @@ public class Atwood extends PApplet {
         //Store the time per frame
         frameTime = this.frameRatePeriod / 10000000;
         frameTime = frameTime / 100;
-        
-        //Add the toggle buttons for the questions
-        for (int x = 0; x < 4; x++){
-            //put the option buttons on screen
-            optQ1[x] = new GOption (this, questx+10, questy*30+10, 100, 20);
-            optQ2[x] = new GOption (this, questx+10, questy*30+50, 100, 20);
-            //Put the option buttons into groups
-            System.out.println(x);
-//            grpQ1.addControl(optQ1[x]);
-//            grpQ2.addControl(optQ2[x]);
-            
-            
-        }
 
+        //Add the toggle buttons for the questions
+        for (int x = 0; x < 4; x++) {
+            //put the option buttons on screen
+            optQ1[x] = new GOption(this, questx + 10, 20 * x + questy + 40, 500, 14);
+            optQ1[x].setText("Question 1, answer " + x);
+            optQ2[x] = new GOption(this, questx + 10, x * 20 + questy + 160, 500, 14);
+            //Put the option buttons into groups
+
+            grpQ1.addControl(optQ1[x]);
+            grpQ2.addControl(optQ2[x]);
+
+        }
+        //Load the questions in
+        questionList = loadStrings("questions");
+        sepQuestions = new String[questionList.length][6];
+        loadQuestions();
+        showQuestions(0);
     }
-    
-    
+
+    public void showQuestions(int page) {
+
+        page *= 2;
+
+        if (page <= questionList.length - 1) {//Show some questions
+            //Load the question
+            question1 = sepQuestions[page][0];
+            question2 = sepQuestions[page + 1][0];
+            //Load the answers
+            for (int x = 0; x < 4; x++) {
+                optQ1[x].setText(sepQuestions[page][x + 1]);
+                optQ2[x].setText(sepQuestions[page + 1][x + 1]);
+
+                //Enable and deselect all the buttons
+                optQ1[x].setEnabled(true);
+                optQ1[x].setSelected(false);
+                optQ2[x].setEnabled(true);
+                optQ2[x].setSelected(false);
+            }
+            //Store the correct answers
+            rightAns[0] = Integer.parseInt(sepQuestions[page][5]);
+            rightAns[1] = Integer.parseInt(sepQuestions[page + 1][5]);
+
+        } else { //Show results
+            JOptionPane.showMessageDialog(frame, "You got " + score + " out of " + questionList.length + " questions correct.");
+        }
+    }
+
+    public void loadQuestions() {
+        for (int x = 0; x < questionList.length; x++) {
+            //Separate parts of the question
+            StringTokenizer st = new StringTokenizer(questionList[x], ",");
+            for (int y = 0; y < 5; y++) {
+                sepQuestions[x][y] = st.nextToken();
+                if (sepQuestions[x][y].charAt(0) == '*') {
+                    //See which answer is right and store it
+                    sepQuestions[x][5] = Integer.toString(y - 1);
+                    //Take away asterisk
+                    sepQuestions[x][y] = sepQuestions[x][y].substring(1);
+                }
+            }
+        }
+    }
+
+    public void handleToggleControlEvents(GToggleControl option, GEvent event) {
+        for (int x = 0; x < 4; x++) {
+            //Question 1
+            if (option == optQ1[x]) {
+                //The answer is right
+                if (x == rightAns[0]) {
+                    JOptionPane.showMessageDialog(frame, "Correct!");
+                    score++;
+                } else { //They're wrong
+                    JOptionPane.showMessageDialog(frame, "Wrong! The answer was choice " + (rightAns[0] + 1));
+                }
+
+                //Disable the buttons no matter what
+                for (int y = 0; y < 4; y++) {
+                    optQ1[y].setEnabled(false);
+                }
+
+            }
+
+            //Question 2
+            if (option == optQ2[x]) {
+                //The answer is right
+                if (x == rightAns[1]) {
+                    JOptionPane.showMessageDialog(frame, "Correct!");
+                    score++;
+                } else { //They're wrong
+                    JOptionPane.showMessageDialog(frame, "Wrong! The answer was choice " + (rightAns[1] + 1));
+                }
+
+                //Disable the buttons no matter what
+                for (int y = 0; y < 4; y++) {
+                    optQ2[y].setEnabled(false);
+                }
+
+            }
+
+        }
+    }
 
     public void handleButtonEvents(GButton button, GEvent event) {
         if (button == btnRun) //run the simulation
@@ -112,6 +204,10 @@ public class Atwood extends PApplet {
         }
         if (button == btnReset) {
             reset();
+        }
+        if (button == btnNext) {
+            questPage++;
+            showQuestions(questPage);
         }
     }
 
@@ -178,7 +274,6 @@ public class Atwood extends PApplet {
 
     public void draw() {
         background(200);
-        
 
         //Draw the "simulation background" rectangle
         fill(250);
@@ -206,13 +301,14 @@ public class Atwood extends PApplet {
         }
 
         showData();
-        
+
         //Draw the question area box
         fill(255);
-        rect(questx, questy, 300,280);
+        rect(questx, questy, 500, 280);
         //Add the text
         fill(0);
-        text(question1,questx+10,questy+25);
+        text(question1, questx + 10, questy + 25);
+        text(question2, questx + 10, questy + 145);
 
     }
 
@@ -226,13 +322,13 @@ public class Atwood extends PApplet {
         textAlign(LEFT);
         fill(0);
         //Display the text
-        text("Velocity: " + round2(leftWeight.getVelocity())+ " m/s", topx + 10, topy + 20);
-        text("Height: "+round2(leftWeight.getHeight())+ " m", topx+10, topy+50);
-        text ("Ep: "+round2(leftWeight.getEp())+ "j",topx+10, topy+80);
-        text("Ek: "+round2(leftWeight.getEk()),topx+10, topy+110);
-        
+        text("Speed: " + round2(leftWeight.getVelocity()) + " m/s", topx + 10, topy + 20);
+        text("Height: " + round2(leftWeight.getHeight()) + " m", topx + 10, topy + 50);
+        text("Ep: " + round2(leftWeight.getEp()) + "j", topx + 10, topy + 80);
+        text("Ek: " + round2(leftWeight.getEk()), topx + 10, topy + 110);
+
         //Bottom rectangle
-        float botx=420, boty=145;
+        float botx = 420, boty = 145;
         fill(255);
         rect(botx, boty, 300, 120);
         //Top text setup
@@ -240,10 +336,10 @@ public class Atwood extends PApplet {
         textAlign(LEFT);
         fill(0);
         //Display the text
-        text("Velocity: " + round2(rightWeight.getVelocity())+ " m/s", botx + 10, boty + 20);
-        text("Height: "+round2(rightWeight.getHeight())+ " m", botx+10, boty+50);
-        text ("Ep: "+round2(rightWeight.getEp())+ "j",botx+10, boty+80);
-        text("Ek: "+round2(rightWeight.getEk()),botx+10, boty+110);
+        text("Speed: " + round2(rightWeight.getVelocity()) + " m/s", botx + 10, boty + 20);
+        text("Height: " + round2(rightWeight.getHeight()) + " m", botx + 10, boty + 50);
+        text("Ep: " + round2(rightWeight.getEp()) + "j", botx + 10, boty + 80);
+        text("Ek: " + round2(rightWeight.getEk()), botx + 10, boty + 110);
 
     }
 
@@ -293,22 +389,23 @@ public class Atwood extends PApplet {
         //Has one hit the ground? If so, stop
         if (leftWeight.getHeight() <= 0 || rightWeight.getHeight() <= 0) {
             //Set the low weight height to zero
-            if (leftWeight.getHeight() + distance <= 0) {
+            if (leftWeight.getHeight() - distance <= 0) {
                 leftWeight.setHeight(0);
-            }
-            else if (rightWeight.getHeight() + distance <= 0) {
+                debug(1);
+            } else if (rightWeight.getHeight() + distance <= 0) {
                 rightWeight.setHeight(0);
+                debug(2);
             }
             simulating = false;
             btnRun.setEnabled(false);
-            debug(2);
+
         }
 
     }
 
     float round2(float numIn) {
-        float numOut=numIn * 100;
-        numOut=Math.round(numOut);
+        float numOut = numIn * 100;
+        numOut = Math.round(numOut);
         return numOut / 100;
     }
 
@@ -366,6 +463,7 @@ public class Atwood extends PApplet {
             txtRMass.setText(Float.toString(newMass) + " Kg");
 
         }
+        totmass = leftWeight.getMass() + rightWeight.getMass();
         leftWeight.calculate(time);
         rightWeight.calculate(time);
     }
@@ -398,18 +496,18 @@ public class Atwood extends PApplet {
         }
 
         void setHeight(float h) {
-            height = h/SCALE;
+            height = h / SCALE;
         }
 
         //Calculate values
         void calculate(float ctime) {
             time = ctime;
             //Velocity || gt
-            velocity = (fNet / mass) * time;
+            velocity = (fNet / totmass) * time;
             //Potential energy || ep = mgh
-            ep = mass * gravity * height* SCALE;
+            ep = mass * gravity * height * SCALE;
             //Kinetic enerty || ek = (mv^2)/2
-            ek = mass * (float)Math.pow(velocity,2) / 2;
+            ek = mass * (float) Math.pow(velocity, 2) / 2;
 
         }
 
@@ -429,7 +527,7 @@ public class Atwood extends PApplet {
         }
 
         void move(float amount) {
-            height -= amount ;
+            height -= amount;
         }
 
         void resize(float width1) {
@@ -461,12 +559,14 @@ public class Atwood extends PApplet {
         }
 
         float getVelocity() {
-            return velocity ;
+            return -1 * velocity;
         }
-        float getEp(){
+
+        float getEp() {
             return ep;
         }
-        float getEk(){
+
+        float getEk() {
             return ek;
         }
 
