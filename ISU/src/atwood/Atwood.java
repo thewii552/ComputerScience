@@ -1,4 +1,5 @@
 package atwood;
+
 /*
  ____  ____   ___    ____     ___ __    __      _      ____  ______ 
  /    ||    \ |   \  |    \   /  _]  |__|  |    | |    |    ||      |
@@ -9,7 +10,6 @@ package atwood;
  |__|__||__|__||_____||__|\_||_____| \_/\_/      |_____||____|  |__|  
                                                                     
  */
-
 import processing.core.*;
 import g4p_controls.*;
 import java.util.StringTokenizer;
@@ -29,16 +29,17 @@ public class Atwood extends PApplet {
     GButton btnRun, btnReset, btnNext;
 
     //Sliders
-    GSlider sldLMass, sldRMass, sldLHeight;
+    GSlider sldLMass, sldRMass, sldGravity;
 
     //Text boxes
-    GTextField txtLMass, txtRMass;
+    GTextField txtLMass, txtRMass, txtGravity;
 
     //Wheel image
     PImage wheel;
 
-    float time = 0f, fNet = 0f, gravity = 9.80f, questx = 420, questy = 300, totmass;
-    double frameTime;
+    float time = 0, fNet = 0, gravity = 9.80f;
+    float questx = 450, questy = 300, totmass;
+    float frameTime;
     byte leftOld = 50, rightOld = 50, questPage, score;
 
     //Text for the questions
@@ -67,8 +68,10 @@ public class Atwood extends PApplet {
         //Initialize the sliders
         sldLMass = new GSlider(this, 80, GROUND + 20, 250, 18, 15);
         sldRMass = new GSlider(this, 80, GROUND + 40, 250, 18, 15);
+        sldGravity = new GSlider(this, 80, GROUND + 60, 250, 18, 15);
         sldLMass.setLimits(0, 30);
         sldRMass.setLimits(0, 30);
+        sldGravity.setLimits(0, 19.6f);
 
         //Initialize the text boxes
         txtLMass = new GTextField(this, 340, GROUND + 20, 50, 18);
@@ -76,6 +79,9 @@ public class Atwood extends PApplet {
 
         txtRMass = new GTextField(this, 340, GROUND + 40, 50, 18);
         txtRMass.setText(Float.toString(rightWeight.getMass()) + " Kg");
+        
+        txtGravity = new GTextField(this,340,GROUND+60,50,18);
+        txtGravity.setText(Float.toString(gravity)+" N/kg");
 
         //Initialize the GButtons
         btnRun = new GButton(this, 30, GROUND + 100, 100, 30);
@@ -281,8 +287,8 @@ public class Atwood extends PApplet {
 
         //Draw the rope
         fill(100);
-        line(rightWeight.xpos, GROUND - rightWeight.height - 10, rightWeight.xpos, 55);
-        line(leftWeight.xpos, GROUND - leftWeight.height - 10, leftWeight.xpos, 55);
+        line((float) rightWeight.xpos, GROUND - (float) rightWeight.height - 10, (float) rightWeight.xpos, 55);
+        line((float) leftWeight.xpos, GROUND - (float) leftWeight.height - 10, (float) leftWeight.xpos, 55);
 
         //Draw weights
         leftWeight.draw();
@@ -313,7 +319,7 @@ public class Atwood extends PApplet {
     }
 
     void showData() {
-        int topx = 420, topy = 15;
+        int topx = (int)questx, topy = 15;
         //Top rectangle
         fill(255);
         rect(topx, topy, 300, 120);
@@ -322,13 +328,13 @@ public class Atwood extends PApplet {
         textAlign(LEFT);
         fill(0);
         //Display the text
-        text("Speed: " + round2(leftWeight.getVelocity()) + " m/s", topx + 10, topy + 20);
+        text("Velocity: " + round2(leftWeight.getVelocity()) + " m/s", topx + 10, topy + 20);
         text("Height: " + round2(leftWeight.getHeight()) + " m", topx + 10, topy + 50);
         text("Ep: " + round2(leftWeight.getEp()) + "j", topx + 10, topy + 80);
         text("Ek: " + round2(leftWeight.getEk()), topx + 10, topy + 110);
 
         //Bottom rectangle
-        float botx = 420, boty = 145;
+        float botx = topx, boty = 145;
         fill(255);
         rect(botx, boty, 300, 120);
         //Top text setup
@@ -336,7 +342,7 @@ public class Atwood extends PApplet {
         textAlign(LEFT);
         fill(0);
         //Display the text
-        text("Speed: " + round2(rightWeight.getVelocity()) + " m/s", botx + 10, boty + 20);
+        text("Velocity: " + round2(rightWeight.getVelocity() * -1) + " m/s", botx + 10, boty + 20);
         text("Height: " + round2(rightWeight.getHeight()) + " m", botx + 10, boty + 50);
         text("Ep: " + round2(rightWeight.getEp()) + "j", botx + 10, boty + 80);
         text("Ek: " + round2(rightWeight.getEk()), botx + 10, boty + 110);
@@ -348,6 +354,7 @@ public class Atwood extends PApplet {
         fill(0);
         text("Mass 1", 58, GROUND + 34);
         text("Mass 2", 58, GROUND + 53);
+        text("Gravity", 58, GROUND + 72);
     }
 
     void stepSim(float ctime) {
@@ -360,7 +367,7 @@ public class Atwood extends PApplet {
         //Calculate distance for the weights to move
         float acceleration;
         if (fNet != 0) {
-            acceleration = fNet / (leftWeight.getMass());
+            acceleration = (leftWeight.getMass() - rightWeight.getMass()) * gravity / (leftWeight.getMass() + rightWeight.getMass());
         } else {
             acceleration = 0;
         }
@@ -370,13 +377,12 @@ public class Atwood extends PApplet {
         float pheight = leftWeight.getHeight();
         //Calculate the new height
         float distance = acceleration * (float) Math.pow(ctime, 2);
+        System.out.println("T^2: " + Math.pow(ctime, 2));
         //Calculate the distance step
-        if (distance != 0) {
-            distance -= pheight;
-//            distance = distance / 10;
-        }
+        System.out.println("dist1: " + distance);
 
-        System.out.println("dist" + distance);
+        System.out.println("pheight: " + pheight);
+        System.out.println("dist: " + distance);
         //Move 
 //        if (rightWeight.getMass() > leftWeight.getMass()) { //move left weight up
         leftWeight.move(distance);
@@ -407,6 +413,11 @@ public class Atwood extends PApplet {
         float numOut = numIn * 100;
         numOut = Math.round(numOut);
         return numOut / 100;
+    }
+    float round1(float numIn) {
+        float numOut = numIn * 10;
+        numOut = Math.round(numOut);
+        return numOut / 10;
     }
 
     void debug(int whichIf) {
@@ -463,7 +474,15 @@ public class Atwood extends PApplet {
             txtRMass.setText(Float.toString(newMass) + " Kg");
 
         }
-        totmass = leftWeight.getMass() + rightWeight.getMass();
+        if (slider == sldGravity) {
+            //Get the value
+            float sliderVal = sldGravity.getValueF();
+            //Round the value
+            sliderVal = round1(sliderVal);
+            gravity = sliderVal;
+            txtGravity.setText(Float.toString(gravity)+" N/kg");
+        }
+        totmass = (float) leftWeight.getMass() + (float) rightWeight.getMass();
         leftWeight.calculate(time);
         rightWeight.calculate(time);
     }
@@ -519,10 +538,10 @@ public class Atwood extends PApplet {
             weightImage.resize((int) width, 0);
 
             //Draw the image
-            image(weightImage, xpos - width / 2, GROUND - height - length);
+            image(weightImage, (float) xpos - (float) width / 2, (float) GROUND - (float) height - (float) length);
             //Add text in the middle of the image
             fill(255);
-            text(mass + " kg", xpos + 1, GROUND - height - length / 3);
+            text(mass + " kg", (float) xpos + 1, (float) GROUND - (float) height - (float) length / 3);
 
         }
 
