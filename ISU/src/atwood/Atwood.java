@@ -40,6 +40,7 @@ public class Atwood extends PApplet {
     float time = 0, fNet = 0, gravity = 9.80f;
     float questx = 450, questy = 300, totmass;
     float frameTime;
+    long startTime, cTime;
     float acceleration;
     byte leftOld = 50, rightOld = 50, questPage, score;
 
@@ -55,10 +56,11 @@ public class Atwood extends PApplet {
     GToggleGroup grpQ2 = new GToggleGroup();
 
     int rightAns[] = new int[2];
+    PImage master;
 
     //Store if the simulation is runninng
-    boolean simulating = false;
-    
+    boolean simulating = false, initializing = true;
+
     //Main method to launch the PApplet
     public static void main(String ags[]) {
         PApplet.main(new String[]{"atwood.Atwood"});
@@ -68,7 +70,6 @@ public class Atwood extends PApplet {
         size(1000, 600, JAVA2D);
         //Set the title bar
         frame.setTitle("Forces in Motion: The Atwood Machine");
-        
 
         //Initialize the weights
         leftWeight = new Weight(150, 1, 66, 1.6f);
@@ -105,11 +106,12 @@ public class Atwood extends PApplet {
         wheel.resize(90, 0);
 
         frameRate(60);
+        master = loadImage("physicsMaster.jpg");
+        master.resize(190, 250);
 
-        //Store the time per frame
-        frameTime = this.frameRatePeriod / 10000000;
-        frameTime = frameTime / 55.284f;
-
+//        //Store the time per frame
+//        frameTime = this.frameRatePeriod / 10000000;
+//        frameTime = frameTime / 55.284f;
         //Add the toggle buttons for the questions
         for (int x = 0; x < 4; x++) {
             //put the option buttons on screen
@@ -127,6 +129,8 @@ public class Atwood extends PApplet {
         sepQuestions = new String[questionList.length][6];
         loadQuestions();
         showQuestions(0);
+
+        startTime = System.currentTimeMillis();
 
     }
 
@@ -232,7 +236,7 @@ public class Atwood extends PApplet {
         leftWeight.setHeight(1);
         rightWeight.setHeight(1);
         //Reset gravity
-        gravity=9.8f;
+        gravity = 9.8f;
         sldGravity.setValue(9.8f);
         txtGravity.setText("9.8 N/Kg");
         //Reset the masses, sliders, and labels
@@ -293,8 +297,8 @@ public class Atwood extends PApplet {
                 rightWeight.setMass(numEntered);
             }
         }
-        
-         if (textcontrol == txtGravity) { //Adjust gravity
+
+        if (textcontrol == txtGravity) { //Adjust gravity
             if (event == GEvent.LOST_FOCUS) {
                 //Get the number
                 float numEntered = Float.parseFloat(txtGravity.getText());
@@ -305,7 +309,6 @@ public class Atwood extends PApplet {
                 if (numEntered > 19.6) { //The number is too big. Make it smaller
                     numEntered = 19.6f;
                 }
-                
 
                 if (numEntered < 0) { //The number is too small. Make it bigger
                     numEntered = 0f;
@@ -313,13 +316,43 @@ public class Atwood extends PApplet {
 
                 //Now that the number is good, set the mass and text box
                 txtGravity.setText(Float.toString(numEntered) + "N/kg");
-                rightWeight.setMass(numEntered);
+                gravity=numEntered;
             }
+        }
+    }
+
+    void initialize() {
+        
+        //Determine what time it is
+        cTime = System.currentTimeMillis();
+        frameCount++; //It's been a frame
+        System.out.println(cTime-startTime);
+        System.out.println("Frame "+frameCount);
+        if (cTime - startTime >= 1000) //It's been a second
+           
+        //Determine time per frame
+        {
+            frameTime = ((float)(cTime - startTime)/1000)/(float)frameCount ;
+            System.out.println("Delta: "+(cTime-startTime));
+            System.out.println("Frame time: "+frameTime);
+            initializing = false;
         }
     }
 
     public void draw() {
         background(200);
+
+        if (initializing) { //Determine the frame time
+            initialize();
+            System.out.println("Initializing: "+initializing);
+            
+            //Display the "initializing" text
+            textFont(createFont("Arial",40));
+            fill(0);
+            text("Initializing",130,200);
+            return;
+            
+        }
 
         //Draw the "simulation background" rectangle
         fill(250);
@@ -355,6 +388,9 @@ public class Atwood extends PApplet {
         fill(0);
         text(question1, questx + 10, questy + 25);
         text(question2, questx + 10, questy + 145);
+
+        //Add the PHYSICS MASTER
+        image(master, 760, 15);
 
     }
 
